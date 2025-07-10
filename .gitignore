@@ -136,3 +136,4 @@ src/tryThisDemo.ts
 src/**/.DS_Store
 
 .DS_Store
+.zed
