@@ -1,3 +1,4 @@
+import { SuiClient } from '@mysten/sui/dist/cjs/client';
 export type NetworkType = "testnet" | "mainnet" | "devnet" | "localnet";
 export type initializeParams = {
     mnemonic?: string;
@@ -202,10 +203,17 @@ export type BridgeSwapTransaction = {
     mayan?: any;
 };
 export type MigrateOptions = {
+    fromWallet: true;
+    client: SuiClient;
     apiKey?: string;
     baseUrl?: string;
     slippage?: number;
-    fromWallet?: boolean;
+} | {
+    fromWallet?: false | undefined;
+    client?: SuiClient | undefined;
+    apiKey?: string;
+    baseUrl?: string;
+    slippage?: number;
 };
 interface OracleInfo {
     decimal: number;

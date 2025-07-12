@@ -1,3 +1,5 @@
+import { SuiClient } from '@mysten/sui/dist/cjs/client';
+
 export type NetworkType = "testnet" | "mainnet" | "devnet" | "localnet";
 
 export type initializeParams = {
@@ -222,12 +224,21 @@ export type BridgeSwapTransaction = {
   explorerLink?: string;
   mayan?: any;
 };
-export type MigrateOptions = {
-  apiKey?: string;
-  baseUrl?: string;
-  slippage?: number;
-  fromWallet?: boolean;
-};
+export type MigrateOptions = 
+  | {
+      fromWallet: true;
+      client: SuiClient;
+      apiKey?: string;
+      baseUrl?: string;
+      slippage?: number;
+    }
+  | {
+      fromWallet?: false | undefined;
+      client?: SuiClient | undefined;
+      apiKey?: string;
+      baseUrl?: string;
+      slippage?: number;
+    };
 
 // TypeScript Interface Definitions
 interface OracleInfo {

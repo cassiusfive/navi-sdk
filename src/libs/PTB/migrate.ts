@@ -7,6 +7,7 @@ import {
     buildSwapPTBFromQuote,
     depositCoin,
     flashloan,
+    getCoinPTB,
     getQuote,
     repayDebt,
     repayFlashLoan,
@@ -646,7 +647,7 @@ export async function migrateSupplyFromWalletPTB(
         throw error;
     }
     
-    const [coinFromBalance] = txb.splitCoins(fromCoin.address, [formCoinAmountInMin])
+    const coinFromBalance = await getCoinPTB(address, fromCoin.address, amount, txb, migrateOptions!.client!)
 
     const minAmountOut = Math.floor(Number(quote.amount_out) * (1 - slippage));
     const swappedToCoin = await buildSwapPTBFromQuote(

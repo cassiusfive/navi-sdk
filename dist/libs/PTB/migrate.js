@@ -435,7 +435,7 @@ function migrateSupplyFromWalletPTB(txb, fromCoin, toCoin, amount, address, migr
             console.error(`Error in getQuote: ${error.message}`);
             throw error;
         }
-        const [coinFromBalance] = txb.splitCoins(fromCoin.address, [formCoinAmountInMin]);
+        const coinFromBalance = yield (0, PTB_1.getCoinPTB)(address, fromCoin.address, amount, txb, migrateOptions.client);
         const minAmountOut = Math.floor(Number(quote.amount_out) * (1 - slippage));
         const swappedToCoin = yield (0, PTB_1.buildSwapPTBFromQuote)(address, txb, minAmountOut, coinFromBalance, quote);
         const actualSwappedAmount = txb.moveCall({
