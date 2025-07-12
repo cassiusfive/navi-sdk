@@ -52,3 +52,15 @@ export declare function migratePTB(txb: Transaction, supplyFromCoin: CoinInfo, s
  * @returns An array of migratable coins.
  */
 export declare function getMigratableCoins(): CoinInfo[];
+/**
+ * Create supply position from one coin to another using a flashloan.
+ *
+ * @param txb - The transaction builder.
+ * @param fromCoin - The supply coin to migrate from.
+ * @param toCoin - The supply coin to migrate to.
+ * @param amount - The from coin amount min unit to migrate.
+ * @param address - The user's address.
+ * @param migrateOptions - Optional migration parameters.
+ * @returns The updated transaction builder.
+ */
+export declare function migrateSupplyFromWalletPTB(txb: Transaction, fromCoin: CoinInfo, toCoin: CoinInfo, amount: number, address: string, migrateOptions?: MigrateOptions): Promise<Transaction>;

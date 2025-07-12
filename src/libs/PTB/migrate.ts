@@ -517,14 +517,25 @@ export async function migratePTB(
     migrateOptions?: MigrateOptions,
 ) {
     try {
-        await migrateSupplyPTB(
-            txb,
-            supplyFromCoin,
-            supplyToCoin,
-            supplyAmount,
-            address,
-            migrateOptions,
-        );
+        if (migrateOptions?.fromWallet) {
+            await migrateSupplyFromWalletPTB(txb,
+                supplyFromCoin,
+                supplyToCoin,
+                supplyAmount,
+                address,
+                migrateOptions,
+            );
+        } else {
+            await migrateSupplyPTB(
+                txb,
+                supplyFromCoin,
+                supplyToCoin,
+                supplyAmount,
+                address,
+                migrateOptions,
+            );
+        }
+        
         console.log("Supply migration completed successfully.");
     } catch (error) {
         console.error(`Error in migrateSupplyPTB: ${(error as Error).message}`);
@@ -554,4 +565,105 @@ export async function migratePTB(
  */
 export function getMigratableCoins(): CoinInfo[] {
     return [Sui, wUSDC, nUSDC, vSui, USDT];
+}
+
+/**
+ * Create supply position from one coin to another using a flashloan.
+ *
+ * @param txb - The transaction builder.
+ * @param fromCoin - The supply coin to migrate from.
+ * @param toCoin - The supply coin to migrate to.
+ * @param amount - The from coin amount min unit to migrate.
+ * @param address - The user's address.
+ * @param migrateOptions - Optional migration parameters.
+ * @returns The updated transaction builder.
+ */
+export async function migrateSupplyFromWalletPTB(
+    txb: Transaction,
+    fromCoin: CoinInfo,
+    toCoin: CoinInfo,
+    amount: number,
+    address: string,
+    migrateOptions?: MigrateOptions,
+) {
+    if (fromCoin.address === toCoin.address) {
+        throw new Error("fromCoin and toCoin cannot be the same.");
+    }
+    if (amount <= 0) {
+        throw new Error("Amount must be greater than 0.");
+    }
+
+    const allPools = await getAllPools();
+
+    const fromPool = allPools[fromCoin.symbol];
+    const toPool = allPools[toCoin.symbol];
+
+    const fromPoolConfig: any = {
+        assetId: fromPool.id,
+        poolId: fromPool.contract.pool,
+        type: fromPool.coinType,
+    };
+    const toPoolConfig: any = {
+        assetId: toPool.id,
+        poolId: toPool.contract.pool,
+        type: toPool.coinType,
+    };
+
+    let fromCoinPrice = fromPool.oracle.price;
+    let toCoinPrice = toPool.oracle.price;
+
+    if (fromCoin.symbol === "vSui" || fromCoin.symbol === "haSui") {
+        fromCoinPrice = await calcRealPriceFromSui(
+            fromCoinPrice,
+            fromCoin,
+            migrateOptions,
+        );
+    }
+    if (toCoin.symbol === "vSui" || toCoin.symbol === "haSui") {
+        toCoinPrice = await calcRealPriceFromSui(
+            toCoinPrice,
+            toCoin,
+            migrateOptions,
+        );
+    }
+
+    const formCoinAmountInMin = amount;
+    // const formCoinAmountInMin = toMinUnit(amount, fromCoin.decimal);
+    const slippage = migrateOptions?.slippage ?? 0.005;
+
+    let quote;
+    try {
+        quote = await getQuote(
+            fromCoin.address,
+            toCoin.address,
+            formCoinAmountInMin,
+            migrateOptions?.apiKey,
+            { baseUrl: migrateOptions?.baseUrl },
+        );
+        console.log("Quote obtained:", quote);
+    } catch (error) {
+        console.error(`Error in getQuote: ${(error as Error).message}`);
+        throw error;
+    }
+    
+    const [coinFromBalance] = txb.splitCoins(fromCoin.address, [formCoinAmountInMin])
+
+    const minAmountOut = Math.floor(Number(quote.amount_out) * (1 - slippage));
+    const swappedToCoin = await buildSwapPTBFromQuote(
+        address,
+        txb,
+        minAmountOut,
+        coinFromBalance as any,
+        quote,
+    );
+    
+    const actualSwappedAmount = txb.moveCall({
+        target: "0x2::coin::value",
+        arguments: [swappedToCoin],
+        typeArguments: [toCoin.address]
+    })
+    
+    await depositCoin(txb, toPoolConfig, swappedToCoin, actualSwappedAmount)
+
+    return txb;
 }

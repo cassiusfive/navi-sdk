@@ -226,6 +226,7 @@ export type MigrateOptions = {
   apiKey?: string;
   baseUrl?: string;
   slippage?: number;
+  fromWallet?: boolean;
 };
 
 // TypeScript Interface Definitions

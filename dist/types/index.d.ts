@@ -205,6 +205,7 @@ export type MigrateOptions = {
     apiKey?: string;
     baseUrl?: string;
     slippage?: number;
+    fromWallet?: boolean;
 };
 interface OracleInfo {
     decimal: number;

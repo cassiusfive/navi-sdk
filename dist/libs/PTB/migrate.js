@@ -14,6 +14,7 @@ exports.migrateSupplyPTB = migrateSupplyPTB;
 exports.migrateBorrowPTB = migrateBorrowPTB;
 exports.migratePTB = migratePTB;
 exports.getMigratableCoins = getMigratableCoins;
+exports.migrateSupplyFromWalletPTB = migrateSupplyFromWalletPTB;
 const PoolInfo_1 = require("../PoolInfo");
 const address_1 = require("../../address");
 const PTB_1 = require("../../libs/PTB");
@@ -352,7 +353,12 @@ function migrateBorrowPTB(txb, fromCoin, toCoin, amount, address, migrateOptions
 function migratePTB(txb, supplyFromCoin, supplyToCoin, borrowFromCoin, borrowToCoin, supplyAmount, borrowAmount, address, migrateOptions) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            yield migrateSupplyPTB(txb, supplyFromCoin, supplyToCoin, supplyAmount, address, migrateOptions);
+            if (migrateOptions === null || migrateOptions === void 0 ? void 0 : migrateOptions.fromWallet) {
+                yield migrateSupplyFromWalletPTB(txb, supplyFromCoin, supplyToCoin, supplyAmount, address, migrateOptions);
+            }
+            else {
+                yield migrateSupplyPTB(txb, supplyFromCoin, supplyToCoin, supplyAmount, address, migrateOptions);
+            }
             console.log("Supply migration completed successfully.");
         }
         catch (error) {
@@ -375,4 +381,69 @@ function migratePTB(txb, supplyFromCoin, supplyToCoin, borrowFromCoin, borrowToC
  */
 function getMigratableCoins() {
     return [address_1.Sui, address_1.wUSDC, address_1.nUSDC, address_1.vSui, address_1.USDT];
+}
+/**
+ * Create supply position from one coin to another using a flashloan.
+ *
+ * @param txb - The transaction builder.
+ * @param fromCoin - The supply coin to migrate from.
+ * @param toCoin - The supply coin to migrate to.
+ * @param amount - The from coin amount min unit to migrate.
+ * @param address - The user's address.
+ * @param migrateOptions - Optional migration parameters.
+ * @returns The updated transaction builder.
+ */
+function migrateSupplyFromWalletPTB(txb, fromCoin, toCoin, amount, address, migrateOptions) {
+    return __awaiter(this, void 0, void 0, function* () {
+        var _a;
+        if (fromCoin.address === toCoin.address) {
+            throw new Error("fromCoin and toCoin cannot be the same.");
+        }
+        if (amount <= 0) {
+            throw new Error("Amount must be greater than 0.");
+        }
+        const allPools = yield (0, PoolInfo_1.getAllPools)();
+        const fromPool = allPools[fromCoin.symbol];
+        const toPool = allPools[toCoin.symbol];
+        const fromPoolConfig = {
+            assetId: fromPool.id,
+            poolId: fromPool.contract.pool,
+            type: fromPool.coinType,
+        };
+        const toPoolConfig = {
+            assetId: toPool.id,
+            poolId: toPool.contract.pool,
+            type: toPool.coinType,
+        };
+        let fromCoinPrice = fromPool.oracle.price;
+        let toCoinPrice = toPool.oracle.price;
+        if (fromCoin.symbol === "vSui" || fromCoin.symbol === "haSui") {
+            fromCoinPrice = yield calcRealPriceFromSui(fromCoinPrice, fromCoin, migrateOptions);
+        }
+        if (toCoin.symbol === "vSui" || toCoin.symbol === "haSui") {
+            toCoinPrice = yield calcRealPriceFromSui(toCoinPrice, toCoin, migrateOptions);
+        }
+        const formCoinAmountInMin = amount;
+        // const formCoinAmountInMin = toMinUnit(amount, fromCoin.decimal);
+        const slippage = (_a = migrateOptions === null || migrateOptions === void 0 ? void 0 : migrateOptions.slippage) !== null && _a !== void 0 ? _a : 0.005;
+        let quote;
+        try {
+            quote = yield (0, PTB_1.getQuote)(fromCoin.address, toCoin.address, formCoinAmountInMin, migrateOptions === null || migrateOptions === void 0 ? void 0 : migrateOptions.apiKey, { baseUrl: migrateOptions === null || migrateOptions === void 0 ? void 0 : migrateOptions.baseUrl });
+            console.log("Quote obtained:", quote);
+        }
+        catch (error) {
+            console.error(`Error in getQuote: ${error.message}`);
+            throw error;
+        }
+        const [coinFromBalance] = txb.splitCoins(fromCoin.address, [formCoinAmountInMin]);
+        const minAmountOut = Math.floor(Number(quote.amount_out) * (1 - slippage));
+        const swappedToCoin = yield (0, PTB_1.buildSwapPTBFromQuote)(address, txb, minAmountOut, coinFromBalance, quote);
+        const actualSwappedAmount = txb.moveCall({
+            target: "0x2::coin::value",
+            arguments: [swappedToCoin],
+            typeArguments: [toCoin.address]
+        });
+        yield (0, PTB_1.depositCoin)(txb, toPoolConfig, swappedToCoin, actualSwappedAmount);
+        return txb;
+    });
 }
