@@ -22,4 +22,5 @@ export {
 } from "./commonFunctions";
 export * from "../Aggregator";
 export * as migrateModule from "./migrate";
+export * from "./repayWithCollateral"
 export { getPoolApy, getBorrowFee, getCurrentRules, getPoolsApy } from "./V3";

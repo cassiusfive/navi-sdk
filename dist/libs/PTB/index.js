@@ -60,6 +60,7 @@ Object.defineProperty(exports, "claimAllRewardsResupplyPTB", { enumerable: true,
 Object.defineProperty(exports, "claimRewardsByAssetIdPTB", { enumerable: true, get: function () { return commonFunctions_1.claimRewardsByAssetIdPTB; } });
 __exportStar(require("../Aggregator"), exports);
 exports.migrateModule = __importStar(require("./migrate"));
+__exportStar(require("./repayWithCollateral"), exports);
 var V3_1 = require("./V3");
 Object.defineProperty(exports, "getPoolApy", { enumerable: true, get: function () { return V3_1.getPoolApy; } });
 Object.defineProperty(exports, "getBorrowFee", { enumerable: true, get: function () { return V3_1.getBorrowFee; } });
