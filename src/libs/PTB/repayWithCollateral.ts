@@ -12,6 +12,7 @@ import { getAllPools } from "../PoolInfo";
 import { getFlashloanFee } from "./migrate";
 
 type repayWithCollateralOptions = {
+    useFlashloan?: boolean
     apiKey?: string;
     baseUrl?: string;
     slippage?: number;
@@ -60,8 +61,9 @@ export async function repayWithCollateral(
     address: string,
     options?: repayWithCollateralOptions,
 ) {
+    const useFlashloan = options?.useFlashloan ?? false;
+        
     const allPools = await getAllPools();
-
     const collateralPool = allPools[collateralCoin.symbol];
     const debtPool = allPools[debtCoin.symbol];
 
@@ -79,17 +81,8 @@ export async function repayWithCollateral(
     const collateralCoinPrice = getPriceFromPool(collateralPool);
     const debtCoinPrice = getPriceFromPool(debtPool);
 
-    const flashloanFee = await getFlashloanFee(debtCoin);
+    const flashloanFee = useFlashloan ? await getFlashloanFee(debtCoin) : 0;
     const slippage = options?.slippage ?? 0.005;
-    
-    console.log('=== calcAmountNeededToRepay Inputs ===');
-    console.log('amount:', amount);
-    console.log('debtCoinPrice:', debtCoinPrice);
-    console.log('debtCoin.decimal:', debtCoin.decimal);
-    console.log('collateralCoinPrice:', collateralCoinPrice);
-    console.log('collateralCoin.decimal:', collateralCoin.decimal);
-    console.log('flashloanFee:', flashloanFee);
-    console.log('slippage:', slippage);
 
     const [minCollateralAmount, minSwapAmountOut] = calcAmountNeededToRepay(
         amount,
@@ -101,79 +94,111 @@ export async function repayWithCollateral(
         slippage,
     );
     
-    console.log('=== calcAmountNeededToRepay Results ===');
-    console.log('minCollateralAmount:', minCollateralAmount);
-    console.log('minSwapAmountOut:', minSwapAmountOut);
-    console.log('Results array:', [minCollateralAmount, minSwapAmountOut]);
-
-    // use flashloan to borrow enough to repay debt
-    const [flashloanBalance, receipt] = await flashloan(
-        txb,
-        debtPoolConfig,
-        amount,
-    );
-
-    const [flashCoin]: any = txb.moveCall({
-        target: "0x2::coin::from_balance",
-        arguments: [flashloanBalance],
-        typeArguments: [debtCoin.address],
-    });
-
-    // repay debt using flashloan
-    repayDebt(txb, debtPoolConfig, flashCoin, amount);
-
-    // withdraw enough to cover flashloan after swap
-    const [withdrawnCollateralCoin] = await withdrawCoin(
-        txb,
-        collateralPoolConfig,
-        minCollateralAmount,
-    );
-
-    let quote;
-    try {
-        quote = await getQuote(
-            collateralCoin.address,
-            debtCoin.address,
-            minCollateralAmount,
-            options?.apiKey,
-            { baseUrl: options?.baseUrl },
+    if (useFlashloan) {
+        const [flashloanBalance, receipt] = await flashloan(
+            txb,
+            debtPoolConfig,
+            amount,
         );
-        console.log("Quote obtained:", quote);
-    } catch (error) {
-        console.error(`Failed to get quote: ${(error as Error).message}`);
-        throw error;
+    
+        const [flashCoin]: any = txb.moveCall({
+            target: "0x2::coin::from_balance",
+            arguments: [flashloanBalance],
+            typeArguments: [debtCoin.address],
+        });
+    
+        // repay debt using flashloan
+        repayDebt(txb, debtPoolConfig, flashCoin, amount);
+    
+        // withdraw enough to cover flashloan after swap
+        const [withdrawnCollateralCoin] = await withdrawCoin(
+            txb,
+            collateralPoolConfig,
+            minCollateralAmount,
+        );
+    
+        let quote;
+        try {
+            quote = await getQuote(
+                collateralCoin.address,
+                debtCoin.address,
+                minCollateralAmount,
+                options?.apiKey,
+                { baseUrl: options?.baseUrl },
+            );
+            console.log("Quote obtained:", quote);
+        } catch (error) {
+            console.error(`Failed to get quote: ${(error as Error).message}`);
+            throw error;
+        }
+    
+        // swap withdrawn collateral to debt coin
+        const swappedCollateralCoin = await buildSwapPTBFromQuote(
+            address,
+            txb,
+            minSwapAmountOut,
+            withdrawnCollateralCoin as any,
+            quote,
+        );
+    
+        const repayBalance = txb.moveCall({
+            target: "0x2::coin::into_balance",
+            arguments: [swappedCollateralCoin],
+            typeArguments: [debtCoin.address],
+        });
+    
+        // repay flashloan with swapped collateral
+        const [leftoverBalance] = await repayFlashLoan(
+            txb,
+            debtPoolConfig,
+            receipt,
+            repayBalance,
+        );
+    
+        // transfer any extra coins to the user
+        const [leftoverCoin] = txb.moveCall({
+            target: "0x2::coin::from_balance",
+            arguments: [leftoverBalance],
+            typeArguments: [debtCoin.address],
+        });
+        txb.transferObjects([leftoverCoin], address);
+    } else {
+        const [withdrawnCollateralCoin] = await withdrawCoin(
+            txb,
+            collateralPoolConfig,
+            minCollateralAmount,
+        );
+        
+        let quote;
+        try {
+            quote = await getQuote(
+                collateralCoin.address,
+                debtCoin.address,
+                minCollateralAmount,
+                options?.apiKey,
+                { baseUrl: options?.baseUrl },
+            );
+            console.log("Quote obtained:", quote);
+        } catch (error) {
+            console.error(`Failed to get quote: ${(error as Error).message}`);
+            throw error;
+        }
+    
+        // swap withdrawn collateral to debt coin
+        const swappedCollateralCoin = await buildSwapPTBFromQuote(
+            address,
+            txb,
+            minSwapAmountOut,
+            withdrawnCollateralCoin as any,
+            quote,
+        );
+        
+        const [repayCoin] = txb.splitCoins(swappedCollateralCoin, [amount]);
+        
+        repayDebt(txb, debtPoolConfig, repayCoin, amount);
+        
+        txb.transferObjects([swappedCollateralCoin], address);
     }
-
-    // swap withdrawn collateral to debt coin
-    const swappedCollateralCoin = await buildSwapPTBFromQuote(
-        address,
-        txb,
-        minSwapAmountOut,
-        withdrawnCollateralCoin as any,
-        quote,
-    );
-
-    const repayBalance = txb.moveCall({
-        target: "0x2::coin::into_balance",
-        arguments: [swappedCollateralCoin],
-        typeArguments: [debtCoin.address],
-    });
-
-    // repay flashloan with swapped collateral
-    const [leftoverBalance] = await repayFlashLoan(
-        txb,
-        debtPoolConfig,
-        receipt,
-        repayBalance,
-    );
-
-    // transfer any extra coins to the user
-    const [leftoverCoin] = txb.moveCall({
-        target: "0x2::coin::from_balance",
-        arguments: [leftoverBalance],
-        typeArguments: [debtCoin.address],
-    });
-    txb.transferObjects([leftoverCoin], address);
 
     return txb;
 }
