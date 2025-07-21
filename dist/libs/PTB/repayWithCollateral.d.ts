@@ -1,6 +1,7 @@
 import { Transaction } from "@mysten/sui/transactions";
 import { CoinInfo } from "../../types";
 type repayWithCollateralOptions = {
+    useFlashloan?: boolean;
     apiKey?: string;
     baseUrl?: string;
     slippage?: number;
