@@ -378,14 +378,14 @@ export async function migrateBorrowPTB(
     let fromCoinPrice = fromPool.oracle.price;
     let toCoinPrice = toPool.oracle.price;
 
-    if (fromCoin.symbol === "vSui" || fromCoin.symbol === "haSui") {
+    if (fromCoin.symbol.toLowerCase() === "vsui" || fromCoin.symbol.toLowerCase() === "hasui") {
         fromCoinPrice = await calcRealPriceFromSui(
             fromCoinPrice,
             fromCoin,
             migrateOptions,
         );
     }
-    if (toCoin.symbol === "vSui" || toCoin.symbol === "haSui") {
+    if (toCoin.symbol.toLowerCase() === "vsui" || toCoin.symbol.toLowerCase() === "hasui") {
         toCoinPrice = await calcRealPriceFromSui(
             toCoinPrice,
             toCoin,
