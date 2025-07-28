@@ -40,7 +40,7 @@ function getQuote(fromCoinAddress, toCoinAddress, amountIn, apiKey, swapOptions)
             amount: (typeof amountIn === 'bigint' ? Number(amountIn) : amountIn).toString(),
             by_amount_in: (swapOptions === null || swapOptions === void 0 ? void 0 : swapOptions.byAmountIn) !== undefined ? swapOptions.byAmountIn.toString() : 'true',
             depth: (swapOptions === null || swapOptions === void 0 ? void 0 : swapOptions.depth) !== undefined ? swapOptions.depth.toString() : '3',
-            is_accurate: 'true',
+            // is_accurate: 'true',
             version: '8'
         }).toString();
         // Construct dex provider string if dexList is provided
