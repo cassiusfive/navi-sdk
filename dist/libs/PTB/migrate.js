@@ -182,10 +182,10 @@ function migrateSupplyPTB(txb, fromCoin, toCoin, amount, address, migrateOptions
         };
         let fromCoinPrice = fromPool.oracle.price;
         let toCoinPrice = toPool.oracle.price;
-        if (fromCoin.symbol === "vSui" || fromCoin.symbol === "haSui") {
+        if (fromCoin.symbol.toLowerCase() === "vsui" || fromCoin.symbol.toLowerCase() === "hasui") {
             fromCoinPrice = yield calcRealPriceFromSui(fromCoinPrice, fromCoin, migrateOptions);
         }
-        if (toCoin.symbol === "vSui" || toCoin.symbol === "haSui") {
+        if (toCoin.symbol.toLowerCase() === "vsui" || toCoin.symbol.toLowerCase() === "hasui") {
             toCoinPrice = yield calcRealPriceFromSui(toCoinPrice, toCoin, migrateOptions);
         }
         const toCoinFlashloanFee = yield getFlashloanFee(toCoin);
@@ -417,10 +417,10 @@ function migrateSupplyFromWalletPTB(txb, fromCoin, toCoin, amount, address, migr
         };
         let fromCoinPrice = fromPool.oracle.price;
         let toCoinPrice = toPool.oracle.price;
-        if (fromCoin.symbol === "vSui" || fromCoin.symbol === "haSui") {
+        if (fromCoin.symbol.toLowerCase() === "vsui" || fromCoin.symbol.toLowerCase() === "hasui") {
             fromCoinPrice = yield calcRealPriceFromSui(fromCoinPrice, fromCoin, migrateOptions);
         }
-        if (toCoin.symbol === "vSui" || toCoin.symbol === "haSui") {
+        if (toCoin.symbol.toLowerCase() === "vsui" || toCoin.symbol.toLowerCase() === "hasui") {
             toCoinPrice = yield calcRealPriceFromSui(toCoinPrice, toCoin, migrateOptions);
         }
         const formCoinAmountInMin = amount;
