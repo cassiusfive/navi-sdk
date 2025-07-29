@@ -69,7 +69,7 @@ export declare function repayDebt(txb: Transaction, _pool: PoolConfig, coinObjec
  * @param address - The address for which to retrieve the health factor.
  * @returns The health factor balance.
  */
-export declare function getHealthFactorPTB(txb: Transaction, address: string): Promise<import("@mysten/sui/transactions").TransactionResult>;
+export declare function getHealthFactorPTB(txb: Transaction, address: string): Promise<import("@mysten/sui/dist/cjs/transactions").TransactionResult>;
 /**
  * Merges multiple coins into a single coin object.
  *

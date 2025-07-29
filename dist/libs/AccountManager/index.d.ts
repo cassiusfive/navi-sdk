@@ -206,7 +206,7 @@ export declare class AccountManager {
      * @param assetId - The ID of the asset for which to retrieve the reserve details.
      * @returns A Promise that resolves to the parsed result of the reserve details.
      */
-    getReservesDetail(assetId: number): Promise<import("@mysten/sui/client").SuiObjectResponse>;
+    getReservesDetail(assetId: number): Promise<import("@mysten/sui/dist/cjs/client").SuiObjectResponse>;
     /**
      * Retrieves the NAVI portfolio for the current account.
      * @param prettyPrint - A boolean indicating whether to print the portfolio in a pretty format. Default is true.
@@ -243,5 +243,5 @@ export declare class AccountManager {
      */
     updateOracle(): Promise<any>;
     swap(fromCoinAddress: string, toCoinAddress: string, amountIn: number | string | bigint, minAmountOut: number, apiKey?: string, swapOptions?: SwapOptions): Promise<any>;
-    dryRunSwap(fromCoinAddress: string, toCoinAddress: string, amountIn: number | string | bigint, minAmountOut: number, apiKey?: string, swapOptions?: SwapOptions): Promise<import("@mysten/sui/client").DryRunTransactionBlockResponse>;
+    dryRunSwap(fromCoinAddress: string, toCoinAddress: string, amountIn: number | string | bigint, minAmountOut: number, apiKey?: string, swapOptions?: SwapOptions): Promise<import("@mysten/sui/dist/cjs/client").DryRunTransactionBlockResponse>;
 }

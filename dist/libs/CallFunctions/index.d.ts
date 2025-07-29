@@ -17,7 +17,7 @@ export declare function moveInspect(tx: Transaction, client: SuiClient, sender: 
  * @param assetId - The ID of the asset for which to retrieve the reserve details.
  * @returns A Promise that resolves to the parsed result of the reserve details.
  */
-export declare function getReservesDetail(assetId: number, client: SuiClient): Promise<import("@mysten/sui/client").SuiObjectResponse>;
+export declare function getReservesDetail(assetId: number, client: SuiClient): Promise<import("@mysten/sui/dist/cjs/client").SuiObjectResponse>;
 export declare function getAddressPortfolio(address: string, prettyPrint: boolean | undefined, client: SuiClient, decimals?: boolean, tokenFilter?: (keyof Pool)[]): Promise<Map<string, {
     borrowBalance: number;
     supplyBalance: number;
