@@ -8,7 +8,7 @@ import {
     PoolData,
 } from "../../types";
 import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
-import { normalizeStructTag } from "@mysten/sui/dist/cjs/utils";
+import { normalizeStructTag } from "@mysten/sui/utils";
 
 type FetchPoolDataArgs = {
     poolId: string;
