@@ -208,8 +208,8 @@ export async function migrateSupplyPTB(
 
     const allPools = await getAllPools();
 
-    const fromPool = allPools[fromCoin.symbol];
-    const toPool = allPools[toCoin.symbol];
+    const fromPool = allPools[fromCoin.address];
+    const toPool = allPools[toCoin.address];
 
     const fromPoolConfig: any = {
         assetId: fromPool.id,
@@ -361,9 +361,9 @@ export async function migrateBorrowPTB(
 
     const allPools = await getAllPools();
 
-    const fromPool = allPools[fromCoin.symbol];
-    const toPool = allPools[toCoin.symbol];
-
+    const fromPool = allPools[fromCoin.address];
+    const toPool = allPools[toCoin.address];
+    
     const fromPoolConfig: any = {
         assetId: fromPool.id,
         poolId: fromPool.contract.pool,
@@ -596,8 +596,8 @@ export async function migrateSupplyFromWalletPTB(
 
     const allPools = await getAllPools();
 
-    const fromPool = allPools[fromCoin.symbol];
-    const toPool = allPools[toCoin.symbol];
+    const fromPool = allPools[fromCoin.address];
+    const toPool = allPools[toCoin.address];
 
     const fromPoolConfig: any = {
         assetId: fromPool.id,

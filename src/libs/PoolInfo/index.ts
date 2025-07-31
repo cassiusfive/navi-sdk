@@ -8,6 +8,7 @@ import {
     PoolData,
 } from "../../types";
 import { getFullnodeUrl, SuiClient } from "@mysten/sui/client";
+import { normalizeStructTag } from "@mysten/sui/dist/cjs/utils";
 
 type FetchPoolDataArgs = {
     poolId: string;
@@ -320,7 +321,7 @@ export async function getAllPools() {
         const res: Record<string, any> = {};
 
         for (const pool of poolData) {
-            res[pool.token.symbol] = pool;
+            res[normalizeStructTag(pool.token.coinType)] = pool;
         }
 
         return res;
