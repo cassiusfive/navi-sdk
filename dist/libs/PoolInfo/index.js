@@ -22,6 +22,7 @@ exports.getAllPools = getAllPools;
 const axios_1 = __importDefault(require("axios"));
 const address_1 = require("../../address");
 const client_1 = require("@mysten/sui/client");
+const utils_1 = require("@mysten/sui/dist/cjs/utils");
 const fetchPoolData = (_a) => __awaiter(void 0, [_a], void 0, function* ({ poolId, client, reserveParentId, poolInfo, }) {
     var _b, _c, _d, _e, _f, _g;
     const poolData = poolInfo[poolId];
@@ -263,7 +264,7 @@ function getAllPools() {
             const poolData = response.data.data;
             const res = {};
             for (const pool of poolData) {
-                res[pool.token.symbol] = pool;
+                res[(0, utils_1.normalizeStructTag)(pool.token.coinType)] = pool;
             }
             return res;
         }

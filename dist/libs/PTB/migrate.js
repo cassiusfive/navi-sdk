@@ -168,8 +168,8 @@ function migrateSupplyPTB(txb, fromCoin, toCoin, amount, address, migrateOptions
             throw new Error("Amount must be greater than 0.");
         }
         const allPools = yield (0, PoolInfo_1.getAllPools)();
-        const fromPool = allPools[fromCoin.symbol];
-        const toPool = allPools[toCoin.symbol];
+        const fromPool = allPools[fromCoin.address];
+        const toPool = allPools[toCoin.address];
         const fromPoolConfig = {
             assetId: fromPool.id,
             poolId: fromPool.contract.pool,
@@ -259,8 +259,8 @@ function migrateBorrowPTB(txb, fromCoin, toCoin, amount, address, migrateOptions
             throw new Error("Amount must be greater than 0.");
         }
         const allPools = yield (0, PoolInfo_1.getAllPools)();
-        const fromPool = allPools[fromCoin.symbol];
-        const toPool = allPools[toCoin.symbol];
+        const fromPool = allPools[fromCoin.address];
+        const toPool = allPools[toCoin.address];
         const fromPoolConfig = {
             assetId: fromPool.id,
             poolId: fromPool.contract.pool,
@@ -403,8 +403,8 @@ function migrateSupplyFromWalletPTB(txb, fromCoin, toCoin, amount, address, migr
             throw new Error("Amount must be greater than 0.");
         }
         const allPools = yield (0, PoolInfo_1.getAllPools)();
-        const fromPool = allPools[fromCoin.symbol];
-        const toPool = allPools[toCoin.symbol];
+        const fromPool = allPools[fromCoin.address];
+        const toPool = allPools[toCoin.address];
         const fromPoolConfig = {
             assetId: fromPool.id,
             poolId: fromPool.contract.pool,
